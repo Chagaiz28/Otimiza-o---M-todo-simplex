@@ -4,7 +4,9 @@ import { useLocation } from 'react-router-dom';
 
 const Results = () => {
   const location = useLocation();
-  const { optimalSolution, optimalValue, shadowPrices } = location.state || {};
+  const { solucao, valorOtimo, precoSombra } = location.state || {};
+
+  console.log('Received data in Results:', { solucao, valorOtimo, precoSombra });
 
   return (
     <Container maxWidth="sm" className="container">
@@ -14,13 +16,13 @@ const Results = () => {
         </Typography>
         <List>
           <ListItem>
-            <ListItemText primary="Ponto Ótimo" secondary={optimalSolution ? optimalSolution.join(', ') : 'N/A'} />
+            <ListItemText primary="Ponto Ótimo" secondary={solucao ? solucao.join(', ') : 'N/A'} />
           </ListItem>
           <ListItem>
-            <ListItemText primary="Lucro Obtido" secondary={optimalValue !== undefined ? optimalValue : 'N/A'} />
+            <ListItemText primary="Lucro Ótimo" secondary={valorOtimo !== undefined ? valorOtimo : 'N/A'} />
           </ListItem>
           <ListItem>
-            <ListItemText primary="Preços Sombra" secondary={shadowPrices ? shadowPrices.join(', ') : 'N/A'} />
+            <ListItemText primary="Preços Sombra" secondary={precoSombra ? precoSombra.join(', ') : 'N/A'} />
           </ListItem>
         </List>
       </Box>

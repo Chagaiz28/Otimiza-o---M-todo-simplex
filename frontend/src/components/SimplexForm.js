@@ -9,20 +9,33 @@ const SimplexForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    fetch('/api/solve', {
+    const data = {
+      objectiveFunction: objectiveFunction.split(',').map(Number),
+      constraints: constraints.split('\n').map(row => row.split(',').map(Number)),
+    };
+    console.log('Sending data to backend:', data);
+    fetch('http://localhost:5000/api/solve', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        objectiveFunction,
-        constraints,
-      }),
+      body: JSON.stringify(data),
     })
       .then((response) => response.json())
       .then((data) => {
+        console.log('Received data from backend:', data);
         navigate('/results', { state: data });
       });
+  };
+
+  const handleViewResults = () => {
+    const exampleData = {
+      solucao: [1.5, 2.5],
+      valorOtimo: 10.5,
+      precoSombra: [0, 0.5],
+    };
+    console.log('Navigating to results with example data:', exampleData);
+    navigate('/results', { state: exampleData });
   };
 
   return (
@@ -35,7 +48,7 @@ const SimplexForm = () => {
           <Box sx={{ mb: 2 }}>
             <TextField
               fullWidth
-              label="Função Objetivo"
+              label="Função Objetivo (separada por vírgulas)"
               variant="outlined"
               value={objectiveFunction}
               onChange={(e) => setObjectiveFunction(e.target.value)}
@@ -44,7 +57,7 @@ const SimplexForm = () => {
           <Box sx={{ mb: 2 }}>
             <TextField
               fullWidth
-              label="Restrições"
+              label="Restrições (cada linha uma restrição, valores separados por vírgulas)"
               variant="outlined"
               multiline
               rows={4}
@@ -56,6 +69,9 @@ const SimplexForm = () => {
             Calcular
           </Button>
         </form>
+        <Button variant="outlined" color="secondary" onClick={handleViewResults} sx={{ mt: 2 }}>
+          Ver Resultados de Exemplo
+        </Button>
       </Box>
     </Container>
   );
