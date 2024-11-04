@@ -23,22 +23,71 @@ Este projeto permite que o usuário insira uma função objetivo e um conjunto d
 ## Estrutura de Arquivos
 
 ```plaintext
-[simplex-project/
-│
+Otimiza-o---M-todo-simplex/
 ├── backend/                           # Backend do projeto
-│   ├── app.py                         # Arquivo principal do Flask para rodar a API
-│   ├── simplex.py                     # Implementação do método Simplex em Python
+│   ├── app/                           # Diretório da aplicação Flask
+│   │   ├── __init__.py                # Inicialização da aplicação Flask
+│   │   ├── simplex.py                 # Implementação do método Simplex em Python
+│   │   ├── routes.py                  # Definição das rotas da API
 │   ├── requirements.txt               # Dependências do backend
-│   └── README.md                      # Documentação do backend
-│
+│   ├── run.py                         # Arquivo para rodar a aplicação Flask
+│   └── venv/                          # Ambiente virtual do Python
 ├── frontend/                          # Frontend do projeto
 │   ├── public/                        # Arquivos públicos do React
 │   ├── src/                           # Código-fonte do React
+│   │   ├── components/                # Componentes React para entradas e resultados
+│   │   │   ├── SimplexForm.js         # Componente para o formulário de entrada
+│   │   │   ├── Results.js             # Componente para exibir os resultados
 │   │   ├── App.js                     # Componente principal do React
-│   │   ├── api/                       # Configuração da comunicação com a API
-│   │   └── components/                # Componentes React para entradas e resultados
+│   │   ├── index.js                   # Ponto de entrada do React
+│   │   ├── styles/                    # Arquivos de estilo
+│   │   │   ├── index.css              # Estilos globais
 │   ├── package.json                   # Dependências do frontend
-│   └── README.md                      # Documentação do frontend
-│
-└── README.md                          # Documentação geral do projeto
-](https://github.com/Chagaiz28/Otimiza-o---M-todo-simplex.git)
+└── [README.md]
+ ```
+### Pré-Requisitos
+- Back-end: Python 3.x, Flask, e Flask-CORS
+- Front-end: Node.js e npm
+
+### Instalação e execução
+#1- Clonar o repositório:
+```plaintext
+git clone https://github.com/Chagaiz28/Otimiza-o---M-todo-simplex.git
+cd Otimiza-o---M-todo-simplex
+```
+#2 - Configurar o backend
+```plaintext
+git clone https://github.com/Chagaiz28/Otimiza-o---M-todo-simplex.git
+cd Otimiza-o---M-todo-simplex
+```
+#3 - Crie e ative um ambiente virtual:
+No Windows:
+```plaintext
+python -m venv venv
+.\venv\Scripts\activate
+```
+No macOS/Linux:
+```plaintext
+python3 -m venv venv
+source venv/bin/activate
+```
+#4 - Instale as dependências
+```plaintext
+pip install -r requirements.txt
+```
+#5 - Execute o servidor Flask:
+```plaintext
+python run.py
+```
+O servidor Flask estará rodando em http://localhost:5000.
+
+#6 - Configurar frontend:
+```plaintext
+cd ../frontend
+npm install
+```
+#7 - Execute o Servidor React:
+```plaintext
+npm start
+```
+O servidor React estará rodando em http://localhost:3000.
