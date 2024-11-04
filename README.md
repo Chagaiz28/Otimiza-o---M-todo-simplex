@@ -23,7 +23,7 @@ Este projeto permite que o usuário insira uma função objetivo e um conjunto d
 ## Estrutura de Arquivos
 
 ```plaintext
-simplex-project/
+[simplex-project/
 │
 ├── backend/                           # Backend do projeto
 │   ├── app.py                         # Arquivo principal do Flask para rodar a API
@@ -41,3 +41,4 @@ simplex-project/
 │   └── README.md                      # Documentação do frontend
 │
 └── README.md                          # Documentação geral do projeto
+](https://github.com/Chagaiz28/Otimiza-o---M-todo-simplex.git)
