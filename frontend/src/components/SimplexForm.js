@@ -1,20 +1,48 @@
 import React, { useState } from 'react';
-import { TextField, Button, Container, Typography, Box } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { TextField, Button, Container, Typography, Box, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import { useNavigate, useLocation } from 'react-router-dom';
+import './SimplexForm.css'; // Importe o arquivo CSS
 
 const SimplexForm = () => {
-  const [objectiveFunction, setObjectiveFunction] = useState('');
-  const [constraints, setConstraints] = useState('');
+  const location = useLocation();
+  const { numVariables, numConstraints } = location.state;
+  const [objectiveFunction, setObjectiveFunction] = useState(Array(numVariables).fill(''));
+  const [constraints, setConstraints] = useState(Array.from({ length: numConstraints }, () => Array(numVariables + 1).fill('')));
+  const [operators, setOperators] = useState(Array(numConstraints).fill('<='));
   const navigate = useNavigate();
+
+  const handleObjectiveChange = (index, value) => {
+    const newObjectiveFunction = [...objectiveFunction];
+    newObjectiveFunction[index] = value;
+    setObjectiveFunction(newObjectiveFunction);
+  };
+
+  const handleConstraintChange = (constraintIndex, variableIndex, value) => {
+    const newConstraints = constraints.map((constraint, index) => {
+      if (index === constraintIndex) {
+        const newConstraint = [...constraint];
+        newConstraint[variableIndex] = value;
+        return newConstraint;
+      }
+      return constraint;
+    });
+    setConstraints(newConstraints);
+  };
+
+  const handleOperatorChange = (index, value) => {
+    const newOperators = [...operators];
+    newOperators[index] = value;
+    setOperators(newOperators);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const data = {
-      objectiveFunction: objectiveFunction.split(',').map(Number),
-      constraints: constraints.split('\n').map(row => row.split(',').map(Number)),
+      objectiveFunction: objectiveFunction.map(Number),
+      constraints: constraints.map((row, index) => [...row.slice(0, -1).map(Number), operators[index], Number(row[row.length - 1])]),
     };
     console.log('Sending data to backend:', data);
-    fetch('http://localhost:5000/api/solve', {
+    fetch('http://127.0.0.1:5000/api/solve', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -25,17 +53,10 @@ const SimplexForm = () => {
       .then((data) => {
         console.log('Received data from backend:', data);
         navigate('/results', { state: data });
+      })
+      .catch((error) => {
+        console.error('Error:', error);
       });
-  };
-
-  const handleViewResults = () => {
-    const exampleData = {
-      solucao: [1.5, 2.5],
-      valorOtimo: 10.5,
-      precoSombra: [0, 0.5],
-    };
-    console.log('Navigating to results with example data:', exampleData);
-    navigate('/results', { state: exampleData });
   };
 
   return (
@@ -44,34 +65,64 @@ const SimplexForm = () => {
         <Typography variant="h4" component="h1" gutterBottom>
           Calculadora do Método Simplex
         </Typography>
-        <form onSubmit={handleSubmit}>
-          <Box sx={{ mb: 2 }}>
-            <TextField
-              fullWidth
-              label="Função Objetivo (separada por vírgulas)"
-              variant="outlined"
-              value={objectiveFunction}
-              onChange={(e) => setObjectiveFunction(e.target.value)}
-            />
+        <form onSubmit={handleSubmit} className="form-container">
+          <Box className="form-section">
+            <Typography variant="h6">Função Objetivo</Typography>
+            {objectiveFunction.map((value, index) => (
+              <TextField
+                key={index}
+                fullWidth
+                label={`Coeficiente ${index + 1}`}
+                variant="outlined"
+                value={value}
+                onChange={(e) => handleObjectiveChange(index, e.target.value)}
+                className="form-control"
+              />
+            ))}
           </Box>
-          <Box sx={{ mb: 2 }}>
-            <TextField
-              fullWidth
-              label="Restrições (cada linha uma restrição, valores separados por vírgulas)"
-              variant="outlined"
-              multiline
-              rows={4}
-              value={constraints}
-              onChange={(e) => setConstraints(e.target.value)}
-            />
+          <Box className="form-section">
+            <Typography variant="h6">Restrições</Typography>
+            {constraints.map((constraint, constraintIndex) => (
+              <Box key={constraintIndex} className="form-section">
+                {constraint.slice(0, -1).map((value, variableIndex) => (
+                  <TextField
+                    key={variableIndex}
+                    fullWidth
+                    label={`Coeficiente ${variableIndex + 1}`}
+                    variant="outlined"
+                    value={value}
+                    onChange={(e) => handleConstraintChange(constraintIndex, variableIndex, e.target.value)}
+                    className="form-control"
+                  />
+                ))}
+                <FormControl fullWidth variant="outlined" className="form-control">
+                  <InputLabel>Operador</InputLabel>
+                  <Select
+                    value={operators[constraintIndex]}
+                    onChange={(e) => handleOperatorChange(constraintIndex, e.target.value)}
+                    label="Operador"
+                  >
+                    <MenuItem value="<=">&le;</MenuItem>
+                    <MenuItem value=">=">&ge;</MenuItem>
+                    <MenuItem value="<">&lt;</MenuItem>
+                    <MenuItem value=">">&gt;</MenuItem>
+                  </Select>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  label="Constante"
+                  variant="outlined"
+                  value={constraint[constraint.length - 1]}
+                  onChange={(e) => handleConstraintChange(constraintIndex, constraint.length - 1, e.target.value)}
+                  className="form-control"
+                />
+              </Box>
+            ))}
           </Box>
           <Button variant="contained" color="primary" type="submit">
             Calcular
           </Button>
         </form>
-        <Button variant="outlined" color="secondary" onClick={handleViewResults} sx={{ mt: 2 }}>
-          Ver Resultados de Exemplo
-        </Button>
       </Box>
     </Container>
   );

@@ -1,21 +1,23 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import SetupForm from './components/SetupForm';
 import SimplexForm from './components/SimplexForm';
 import Results from './components/Results';
-import { CssBaseline, Container } from '@mui/material';
+import AnalyzeForm from './components/AnalyzeForm';
+import AnalysisResults from './components/AnalysisResults';
 
-function App() {
+const App = () => {
   return (
     <Router>
-      <CssBaseline />
-      <Container maxWidth="md">
-        <Routes>
-          <Route path="/" element={<SimplexForm />} />
-          <Route path="/results" element={<Results />} />
-        </Routes>
-      </Container>
+      <Routes>
+        <Route path="/" element={<SetupForm />} />
+        <Route path="/simplex-form" element={<SimplexForm />} />
+        <Route path="/results" element={<Results />} />
+        <Route path="/analyze" element={<AnalyzeForm />} />
+        <Route path="/analysis-results" element={<AnalysisResults />} />
+      </Routes>
     </Router>
   );
-}
+};
 
-export default App
+export default App;

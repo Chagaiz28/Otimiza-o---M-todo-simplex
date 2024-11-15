@@ -1,53 +1,117 @@
 import numpy as np
 
-def simplex(funcao_Obj, restricoes, constantes):
-    n_vars = len(funcao_Obj)
-    n_cons = len(constantes)
+def simplex(funcao_Obj, restricoes, constantes, operadores):
+    num_vars = len(funcao_Obj)
+    num_restricoes = len(restricoes)
+    
+    # Preparar o tableau inicial
+    tableau = np.zeros((num_restricoes + 1, num_vars + num_restricoes + 1))
 
-    # Adiciona variáveis de folga às restrições
-    restricoes = np.hstack([restricoes, np.eye(n_cons)])
-    funcao_Obj = np.hstack([-np.array(funcao_Obj), np.zeros(n_cons)])  # Alterado para maximizacao
+    # Inserir função objetivo (negativo para maximização)
+    tableau[0, :num_vars] = -np.array(funcao_Obj)
 
-    # Garante que as constantes sejam uma matriz coluna
-    constantes = np.array(constantes).reshape(-1, 1)  
-    tableau = np.hstack([restricoes, constantes])  # Junta as restrições e constantes
-    tableau = np.vstack([tableau, np.hstack([funcao_Obj, 0])])  # Adiciona a função objetivo
+    # Inserir restrições
+    for i in range(num_restricoes):
+        if operadores[i] == '<=' or operadores[i] == '<':
+            tableau[i + 1, :num_vars] = restricoes[i]
+            tableau[i + 1, -1] = constantes[i]
+            tableau[i + 1, num_vars + i] = 1  # Variável de folga
+        elif operadores[i] == '>=' or operadores[i] == '>':
+            tableau[i + 1, :num_vars] = [-x for x in restricoes[i]]
+            tableau[i + 1, -1] = -constantes[i]
+            tableau[i + 1, num_vars + i] = 1  # Variável de folga
 
-    print("Initial tableau:")
-    print(tableau)
+    # Algoritmo Simplex usando o Tableau
+    while np.min(tableau[0, :-1]) < 0:
+        # Encontrar a coluna pivô (menor valor negativo na linha da função objetivo)
+        pivot_col = np.argmin(tableau[0, :-1])
+        
+        # Encontrar a linha pivô (razão mínima positiva)
+        ratios = []
+        for i in range(1, len(tableau)):
+            if tableau[i, pivot_col] > 0:
+                ratios.append(tableau[i, -1] / tableau[i, pivot_col])
+            else:
+                ratios.append(np.inf)
+        
+        pivot_row = np.argmin(ratios) + 1
 
-    while True:
-        if np.all(tableau[-1, :-1] >= 0):
-            break
-
-        pivot_col = np.argmin(tableau[-1, :-1])
-        ratios = tableau[:-1, -1] / tableau[:-1, pivot_col]
-        ratios[ratios < 0] = np.inf
-        pivot_row = np.argmin(ratios)
-
-        print(f"Pivot column: {pivot_col}, Pivot row: {pivot_row}")
-
+        # Realizar a divisão da linha pivô pelo elemento pivô
         pivot_val = tableau[pivot_row, pivot_col]
-        tableau[pivot_row] /= pivot_val
-        for i in range(tableau.shape[0]):
+        tableau[pivot_row, :] /= pivot_val
+
+        # Ajustar as outras linhas (Eliminação de Gauss)
+        for i in range(len(tableau)):
             if i != pivot_row:
-                tableau[i] -= tableau[pivot_row] * tableau[i, pivot_col]
+                tableau[i, :] -= tableau[i, pivot_col] * tableau[pivot_row, :]
 
-        print("Updated tableau:")
-        print(tableau)
+    # Extrair a solução ótima
+    solucao = np.zeros(num_vars)
+    for i in range(num_vars):
+        coluna = tableau[1:, i]
+        if np.count_nonzero(coluna) == 1 and np.sum(coluna) == 1:
+            row = np.where(coluna == 1)[0][0]
+            solucao[i] = tableau[row + 1, -1]
 
-    # Cálculo da solução
-    solucao = np.zeros(n_vars)
-    for i in range(n_vars):
-        col = tableau[:, i]
-        if (col[:-1] == 1).sum() == 1 and (col[:-1] == 0).sum() == n_cons - 1:
-            row = np.where(col[:-1] == 1)[0][0]
-            solucao[i] = tableau[row, -1]
+    valorOtimo = tableau[0, -1]
 
-    precoSombra = tableau[-1, n_vars:-1]
+    # Calculando preços sombra (valores da linha Z dos coeficientes das variáveis de folga)
+    precoSombra = tableau[0, num_vars:num_vars + num_restricoes]
 
-    print("Solution:", solucao)
-    print("Optimal value:", tableau[-1, -1])
-    print("Shadow prices:", precoSombra)
+    return solucao, valorOtimo, list(precoSombra)
 
-    return solucao, tableau[-1, -1], precoSombra
+
+# Função de análise de variações
+def analyze_variation(funcao_Obj, restricoes, constantes, operadores, variations):
+    num_vars = len(funcao_Obj)
+    num_restricoes = len(restricoes)
+    
+    lhs_ineq = []
+    rhs_ineq = []
+
+    for i, restricao in enumerate(restricoes):
+        if operadores[i] == '<=' or operadores[i] == '<':
+            lhs_ineq.append(restricao)
+            rhs_ineq.append(constantes[i] + variations.get(str(i), 0))
+        elif operadores[i] == '>=' or operadores[i] == '>':
+            lhs_ineq.append([-x for x in restricao])
+            rhs_ineq.append(-constantes[i] - variations.get(str(i), 0))
+
+    # Preparar o tableau inicial
+    tableau = np.zeros((num_restricoes + 1, num_vars + num_restricoes + 1))
+    tableau[0, :num_vars] = -np.array(funcao_Obj)
+
+    # Inserir restrições atualizadas
+    for i in range(num_restricoes):
+        tableau[i + 1, :num_vars] = lhs_ineq[i]
+        tableau[i + 1, -1] = rhs_ineq[i]
+        tableau[i + 1, num_vars + i] = 1
+
+    while np.min(tableau[0, :-1]) < 0:
+        pivot_col = np.argmin(tableau[0, :-1])
+        
+        ratios = []
+        for i in range(1, len(tableau)):
+            if tableau[i, pivot_col] > 0:
+                ratios.append(tableau[i, -1] / tableau[i, pivot_col])
+            else:
+                ratios.append(np.inf)
+        
+        pivot_row = np.argmin(ratios) + 1
+        pivot_val = tableau[pivot_row, pivot_col]
+        tableau[pivot_row, :] /= pivot_val
+
+        for i in range(len(tableau)):
+            if i != pivot_row:
+                tableau[i, :] -= tableau[i, pivot_col] * tableau[pivot_row, :]
+
+    nova_solucao = np.zeros(num_vars)
+    for i in range(num_vars):
+        coluna = tableau[1:, i]
+        if np.count_nonzero(coluna) == 1 and np.sum(coluna) == 1:
+            row = np.where(coluna == 1)[0][0]
+            nova_solucao[i] = tableau[row + 1, -1]
+
+    novo_valor_otimo = tableau[0, -1] * -1
+
+    return nova_solucao, novo_valor_otimo
